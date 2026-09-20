@@ -1,17 +1,14 @@
 # ====================================================================
 # Multi-Stage Dockerfile for UserService (Render / Cloud Container)
 # Stage 1: Build JAR using Maven & OpenJDK 17
-# Stage 2: Minimal Distroless / Alpine JRE Runtime
+# Stage 2: Minimal Alpine JRE Runtime
 # ====================================================================
 
 FROM maven:3.9.6-eclipse-temurin-17-alpine AS builder
 WORKDIR /app
 
-# Cache Maven dependencies
+# Copy pom and source code to package
 COPY pom.xml .
-RUN mvn dependency:go-offline -B
-
-# Copy source code and package
 COPY src ./src
 RUN mvn clean package -DskipTests -B
 
@@ -26,7 +23,7 @@ USER appuser
 # Copy executable jar from build stage
 COPY --from=builder /app/target/*.jar app.jar
 
-# Render assigns a dynamic port via the $PORT environment variable (default 8081)
+# Render assigns a dynamic port via the $PORT environment variable (defaults to 8081 locally)
 ENV PORT=8081
 EXPOSE ${PORT}
 
