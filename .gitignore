@@ -1,0 +1,24 @@
+# Frontend is in a separate repository
+FrontendRegLogin/
+
+# Java / Maven build output
+**/target/
+*.class
+*.jar
+*.war
+*.ear
+
+# IDE & Editor files
+.idea/
+*.iml
+.vscode/
+.project
+.classpath
+.settings/
+
+# OS and Environment
+.DS_Store
+Thumbs.db
+*.log
+*.env
+local.properties

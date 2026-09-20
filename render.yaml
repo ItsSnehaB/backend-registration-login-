@@ -1,0 +1,72 @@
+# ====================================================================
+# Render Blueprint Specification (Infrastructure as Code)
+# Services: user-service (Port 8081) & auth-service (Port 8082)
+# Database: Aiven for MySQL (Cloud hosted with TLS/SSL)
+# ====================================================================
+
+services:
+  # ------------------------------------------------------------------
+  # 1. UserService (Microservice handling user registration)
+  # ------------------------------------------------------------------
+  - type: web
+    name: reglogin-user-service
+    runtime: docker
+    dockerfilePath: ./UserService/Dockerfile
+    dockerContext: ./UserService
+    plan: free
+    region: oregon # Or frankfurt, singapore, ohio
+    healthCheckPath: /api/health
+    envVars:
+      # Render dynamically provides the PORT variable (defaulting to 10000 on Render)
+      - key: PORT
+        value: 8081
+      # Aiven MySQL JDBC Connection String (Replace with your Aiven service details)
+      # Format: jdbc:mysql://<AIVEN_HOST>:<AIVEN_PORT>/reglogin?sslMode=REQUIRED
+      - key: SPRING_DATASOURCE_URL
+        sync: false
+        # Example: jdbc:mysql://mysql-3a4b5c-myproject.aivencloud.com:12345/reglogin?sslMode=REQUIRED
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+        # Example: avnadmin
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
+      # Allowed origins: Replace with your Vercel production URL (e.g. https://my-reglogin.vercel.app)
+      - key: CORS_ALLOWED_ORIGINS
+        value: http://localhost:3036,https://*.vercel.app
+
+  # ------------------------------------------------------------------
+  # 2. AuthenticationService (Microservice handling login & JWT HttpOnly cookies)
+  # ------------------------------------------------------------------
+  - type: web
+    name: reglogin-auth-service
+    runtime: docker
+    dockerfilePath: ./AuthenticationService/Dockerfile
+    dockerContext: ./AuthenticationService
+    plan: free
+    region: oregon
+    healthCheckPath: /api/health
+    envVars:
+      - key: PORT
+        value: 8082
+      # Aiven MySQL Connection
+      - key: SPRING_DATASOURCE_URL
+        sync: false
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
+      # Production 256-bit JWT Signing Key (Keep secret)
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRATION_MS
+        value: 86400000
+      - key: JWT_COOKIE_NAME
+        value: jwt_token
+      # When deployed to production over HTTPS, set secure=true and SameSite=None (or Lax if using Vercel proxy)
+      - key: JWT_COOKIE_SECURE
+        value: "true"
+      - key: JWT_COOKIE_SAMESITE
+        value: None
+      # Allowed origins: Include Vercel frontend URL
+      - key: CORS_ALLOWED_ORIGINS
+        value: http://localhost:3036,https://*.vercel.app
