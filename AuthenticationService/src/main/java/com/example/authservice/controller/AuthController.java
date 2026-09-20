@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -74,8 +75,14 @@ public class AuthController {
      */
     @PostMapping("/logout")
     public ResponseEntity<Map<String, String>> logout(
-            @CookieValue(name = "${jwt.cookie-name:jwt_token}", required = false) String token
+            @CookieValue(name = "${jwt.cookie-name:jwt_token}", required = false) String cookieToken,
+            @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String authHeader
     ) {
+        String token = cookieToken;
+        if ((token == null || token.isBlank()) && authHeader != null && authHeader.startsWith("Bearer ")) {
+            token = authHeader.substring(7);
+        }
+
         if (token != null && !token.isBlank()) {
             authService.logout(token);
         }
@@ -96,14 +103,20 @@ public class AuthController {
 
     /**
      * GET /api/me
-     * Protected endpoint verified via HttpOnly cookie
+     * Protected endpoint verified via HttpOnly cookie or Authorization header
      */
     @GetMapping("/me")
     public ResponseEntity<UserSessionDto> getCurrentUser(
-            @CookieValue(name = "${jwt.cookie-name:jwt_token}", required = false) String token
+            @CookieValue(name = "${jwt.cookie-name:jwt_token}", required = false) String cookieToken,
+            @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String authHeader
     ) {
+        String token = cookieToken;
+        if ((token == null || token.isBlank()) && authHeader != null && authHeader.startsWith("Bearer ")) {
+            token = authHeader.substring(7);
+        }
+
         if (token == null || token.isBlank()) {
-            throw new UnauthorizedException("Unauthorized: No active authentication cookie provided");
+            throw new UnauthorizedException("Unauthorized: No active authentication session provided");
         }
 
         UserSessionDto session = authService.getSessionUser(token);

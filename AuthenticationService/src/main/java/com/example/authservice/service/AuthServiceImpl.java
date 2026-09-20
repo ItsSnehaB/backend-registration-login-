@@ -61,12 +61,13 @@ public class AuthServiceImpl implements AuthService {
         JwtToken jwtTokenEntity = new JwtToken(user.getId(), token, expiryTime);
         jwtTokenRepository.save(jwtTokenEntity);
 
-        // 5. Build sanitized response DTO (no token or password in body, token will go to HttpOnly cookie)
+        // 5. Build sanitized response DTO (token is also sent via HttpOnly cookie)
         LoginResponseDto responseDto = new LoginResponseDto(
                 user.getId(),
                 user.getName(),
                 user.getEmail(),
-                "Login successful"
+                "Login successful",
+                token
         );
 
         return new AuthResult(token, responseDto);
