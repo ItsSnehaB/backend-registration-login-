@@ -13,10 +13,10 @@ public class CorsConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        // Strict CORS: Allow only frontend on http://localhost:3036
-        // allowCredentials(true) is mandatory for browser HttpOnly cookies!
+        String[] origins = allowedOrigins.split("\\s*,\\s*");
         registry.addMapping("/api/**")
-                .allowedOrigins(allowedOrigins)
+                .allowedOrigins(origins)
+                .allowedOriginPatterns("https://*.vercel.app", "http://localhost:*")
                 .allowedMethods("POST", "GET", "OPTIONS")
                 .allowedHeaders("Content-Type", "Accept", "Authorization")
                 .allowCredentials(true)
